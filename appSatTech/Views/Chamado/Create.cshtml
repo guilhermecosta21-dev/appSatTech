@@ -1,46 +1,55 @@
 ﻿@model appSatTech.Models.Chamado
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Abrir Chamado";
 }
 
-<h1>Create</h1>
-
-<h4>Chamado</h4>
+<h1>Abrir Chamado</h1>
+<h4>TechHelp Support</h4>
 <hr />
+
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="DataHora" class="control-label"></label>
+
+            <div class="form-group mb-3">
+                <label asp-for="DataHora" class="control-label">Data/Hora do Atendimento</label>
                 <input asp-for="DataHora" class="form-control" />
                 <span asp-validation-for="DataHora" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="StatusConsulta" class="control-label"></label>
-                <input asp-for="StatusConsulta" class="form-control" />
+
+            <div class="form-group mb-3">
+                <label asp-for="StatusConsulta" class="control-label">Status</label>
+                <select class="form-control" disabled>
+                    <option selected>Agendada</option>
+                </select>
+                <input type="hidden" name="StatusConsulta" value="Agendada" />
+                <small class="form-text text-muted">
+                    Todo chamado inicia como "Agendada". A alteração para "Realizada" ou
+                    "Cancelada" é feita na edição do chamado.
+                </small>
                 <span asp-validation-for="StatusConsulta" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="ClienteId" class="control-label"></label>
-                <select asp-for="ClienteId" class ="form-control" asp-items="ViewBag.ClienteId"></select>
+
+            <div class="form-group mb-3">
+                <label asp-for="TecnicoId" class="control-label">Técnico</label>
+                <select asp-for="TecnicoId" class="form-control" asp-items="ViewBag.TecnicoId">
+                    <option value="">-- Selecione o Técnico --</option>
+                </select>
+                <span asp-validation-for="TecnicoId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="TecnicoId" class="control-label"></label>
-                <select asp-for="TecnicoId" class ="form-control" asp-items="ViewBag.TecnicoId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Cadastrar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

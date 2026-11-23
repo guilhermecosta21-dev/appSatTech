@@ -1,53 +1,76 @@
 ﻿@model IEnumerable<appSatTech.Models.Chamado>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Meus Chamados";
 }
 
-<h1>Index</h1>
+<h1>Meus Chamados</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create" class="btn btn-success">Abrir Novo Chamado</a>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.DataHora)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StatusConsulta)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Cliente)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Tecnico)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataHora)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StatusConsulta)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cliente.Codigo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Tecnico.Codigo)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Codigo">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Codigo">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Codigo">Delete</a>
-            </td>
-        </tr>
+
+@* Campo de pesquisa (Etapa 9) *@
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form asp-action="Index" method="get">
+            <div class="input-group">
+                <input type="text"
+                       name="pesquisa"
+                       value="@ViewData["Pesquisa"]"
+                       class="form-control"
+                       placeholder="Pesquisar por técnico, especialidade, status ou data..." />
+                <button type="submit" class="btn btn-primary">🔎 Pesquisar</button>
+                <a asp-action="Index" class="btn btn-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Nenhum chamado encontrado.</div>
 }
-    </tbody>
-</table>
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.DataHora)</th>
+                <th>Status</th>
+                <th>Técnico</th>
+                <th>Especialidade</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        @if (item.StatusConsulta == "Agendada")
+                        {
+                            <span class="badge bg-primary">Agendada</span>
+                        }
+                        else if (item.StatusConsulta == "Realizada")
+                        {
+                            <span class="badge bg-success">Realizada</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Cancelada</span>
+                        }
+                    </td>
+                    <td>@item.Tecnico.Nome</td>
+                    <td>@item.Tecnico.Especialidade</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Codigo">Editar</a> |
+                        <a asp-action="Details" asp-route-id="@item.Codigo">Detalhes</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Codigo">Excluir</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

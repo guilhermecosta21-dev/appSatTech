@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using appSatTech.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace appSatTech.Controllers
 {
+    [Authorize]
     public class ChamadoController : Controller
     {
         private readonly DbTecnicoContext _context;
@@ -19,10 +21,42 @@ namespace appSatTech.Controllers
         }
 
         // GET: Chamado
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string pesquisa)
         {
-            var dbTecnicoContext = _context.Chamados.Include(c => c.Cliente).Include(c => c.Tecnico);
-            return View(await dbTecnicoContext.ToListAsync());
+            var clienteId = HttpContext.Session.GetInt32("ClienteId");
+
+            if (clienteId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var chamados = _context.Chamados
+                .Include(c => c.Cliente)
+                .Include(c => c.Tecnico)
+                .Where(c => c.ClienteId == clienteId.Value);
+
+            if (!string.IsNullOrWhiteSpace(pesquisa))
+            {
+                pesquisa = pesquisa.Trim();
+
+                if (DateTime.TryParse(pesquisa, out var dataBusca))
+                {
+                    var inicio = dataBusca.Date;
+                    var fim = inicio.AddDays(1);
+                    chamados = chamados.Where(c => c.DataHora >= inicio && c.DataHora < fim);
+                }
+                else
+                {
+                    chamados = chamados.Where(c =>
+                        c.StatusConsulta.Contains(pesquisa) ||
+                        c.Tecnico.Nome.Contains(pesquisa) ||
+                        c.Tecnico.Especialidade.Contains(pesquisa));
+                }
+            }
+
+            ViewData["Pesquisa"] = pesquisa;
+
+            return View(await chamados.OrderByDescending(c => c.DataHora).ToListAsync());
         }
 
         // GET: Chamado/Details/5
@@ -48,8 +82,7 @@ namespace appSatTech.Controllers
         // GET: Chamado/Create
         public IActionResult Create()
         {
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Codigo", "Codigo");
-            ViewData["TecnicoId"] = new SelectList(_context.Tecnicos, "Codigo", "Codigo");
+            ViewData["TecnicoId"] = new SelectList(_context.Tecnicos, "Codigo", "Nome");
             return View();
         }
 
@@ -58,16 +91,24 @@ namespace appSatTech.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Codigo,DataHora,StatusConsulta,ClienteId,TecnicoId")] Chamado chamado)
+        public async Task<IActionResult> Create([Bind("DataHora,StatusConsulta,TecnicoId")] Chamado chamado)
         {
+            var clienteId = HttpContext.Session.GetInt32("ClienteId");
+            if (clienteId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            chamado.ClienteId = clienteId.Value;
+            chamado.StatusConsulta = "Agendada";
+
             if (ModelState.IsValid)
             {
                 _context.Add(chamado);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Codigo", "Codigo", chamado.ClienteId);
-            ViewData["TecnicoId"] = new SelectList(_context.Tecnicos, "Codigo", "Codigo", chamado.TecnicoId);
+            ViewData["TecnicoId"] = new SelectList(_context.Tecnicos, "Codigo", "Nome", chamado.TecnicoId);
             return View(chamado);
         }
 
